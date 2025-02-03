@@ -1,0 +1,73 @@
+version: '3'
+
+services:
+  alice:
+    restart: "no"
+    build:
+      context: "./heimdall-nft-server"
+      dockerfile: ./heimdall_nft_server.dockerfile
+      
+    ports:
+      - "9797:9797"
+
+    command: cargo run --release
+    environment:
+        - HEIMDALL_RS_LIBS=/usr/lib/gcc/x86_64-linux-gnu/12/
+    networks:
+          - shared-network-alice
+    
+  bob:
+    restart: "no"
+    build:
+      context: "./heimdall-nft-server"
+      dockerfile: ./heimdall_nft_server.dockerfile
+      
+    ports:
+      - "9798:9797"
+
+    command: cargo run --release
+    environment:
+        - HEIMDALL_RS_LIBS=/usr/lib/gcc/x86_64-linux-gnu/12/
+    networks:
+          - shared-network-bob
+
+  
+  charly:
+    restart: "no"
+    build:
+      context: "./heimdall-nft-server"
+      dockerfile: ./heimdall_nft_server.dockerfile
+      
+    ports:
+      - "9799:9797"
+
+    command: cargo run --release
+    environment:
+        - HEIMDALL_RS_LIBS=/usr/lib/gcc/x86_64-linux-gnu/12/
+    networks:
+          - shared-network-charly
+
+  la_api:
+    restart: "no"
+    build:
+      context: ./sfnfts/backend
+      dockerfile: ./la_api/la_api.dockerfile
+    networks:
+          - shared-network-alice
+          - shared-network-bob
+          - shared-network-charly
+
+    ports:
+      - "8000:8000"
+
+    command:  bash -c "rm -rf ledger_authority.sqlite && cargo run"
+    environment:
+        - HEIMDALL_RS_LIBS=/usr/lib/gcc/x86_64-linux-gnu/12/
+
+networks:
+  shared-network-alice:
+      driver: bridge
+  shared-network-bob:
+      driver: bridge
+  shared-network-charly:
+      driver: bridge

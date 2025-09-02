@@ -6,4 +6,4 @@
 [submodule "sfnfts"]
 	path = sfnfts
 	url = git@gitlab.cc-asp.fraunhofer.de:blockchainlab/sfnfts.git
-	branch = feature/rapid_witnesscalc
+	branch = feature/child_nft

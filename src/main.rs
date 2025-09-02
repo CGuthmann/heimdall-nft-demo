@@ -365,8 +365,208 @@ fn demo_paper(){
 
 }
 
+fn demo_elma(){
+    let alice_priv = BigInt::from_str("1").unwrap(); //0
+    let alice_pub = BigInt::from_str(
+        "18586133768512220936620570745912940619677854269274689475585506675881198879027",
+    )
+    .unwrap();
+
+    
+    let oem_priv = BigInt::from_str("8").unwrap(); //3
+    let oem_pub = BigInt::from_str(
+        "8761383103374198182292249284037598775384145428470309206166618811601037048804",
+    )
+    .unwrap(); 
+
+    let bob_priv = BigInt::from_str("6").unwrap(); //1
+    let bob_pub = BigInt::from_str(
+        "4204312525841135841975512941763794313765175850880841168060295322266705003157",
+    )
+    .unwrap(); 
+
+    let shop_priv = BigInt::from_str("7").unwrap(); //2
+    let shop_pub = BigInt::from_str(
+        "7061949393491957813657776856458368574501817871421526214197139795307327923534",
+    )
+    .unwrap();
+
+    println!("OEM mints car DPP on Alice's pk.");
+    let car_params = NewParams{
+        attributes: vec![
+            "car_model".to_owned(),
+            "car_specification".to_owned(),
+            "car_id".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+        ],
+        id:255 as u64,
+        expiration:3650,
+        credential_type: "car".to_owned(),
+        delegatable:false,
+        registry: "revocRegistry".to_owned(),
+        sk_issuer: oem_priv.clone(),
+        owner:alice_pub.clone(),
+        trust_list_index: 3
+    };
+    
+
+    
+    let client = reqwest::blocking::Client::new();
+    let mut resp = client.post(OEM_URL.to_owned() + "/new").json(&car_params).send().expect("OEM new post failed");
+    let mut car_dpp: NFTCredential<PoseidonHasher, PoseidonSignature> = resp.json().expect("OEM new post failed to unwrap");
+
+    println!("Car DPP created: {}\n", serde_json::to_string(&car_dpp).expect("Unexpected conversion error"));
+
+
+    print!("Waiting for finalization...");
+    sleep(Duration::from_secs(15));
+    println!("done!");
+
+    println!("OEM mints battery DPP on car's DPP.");
+
+    let battery_params = NewParams{
+        attributes: vec![
+            "battery_model".to_owned(),
+            "battery_specification".to_owned(),
+            "battery_id".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+        ],
+        id:255 as u64,
+        expiration:3650,
+        credential_type: "battery".to_owned(),
+        delegatable:false,
+        registry: "revocRegistry".to_owned(),
+        sk_issuer: oem_priv.clone(),
+        owner:oem_pub.clone(),
+        trust_list_index: 3
+    };
+    
+
+    
+    let client = reqwest::blocking::Client::new();
+    let mut resp = client.post(OEM_URL.to_owned() + "/new").json(&battery_params).send().expect("OEM new post failed");
+    let battery_dpp: NFTCredential<PoseidonHasher, PoseidonSignature> = resp.json().expect("OEM new post failed to unwrap");
+
+    println!("Battery DPP created: {}\n", serde_json::to_string(&battery_dpp).expect("Unexpected conversion error"));
+
+
+    print!("Waiting for finalization...");
+    sleep(Duration::from_secs(15));
+    println!("done!");
+
+    let battery_attach_params = AttachParams{
+        nft: battery_dpp,
+        private_key: oem_priv.clone(),
+        target: car_dpp,
+    };
+    
+
+    
+    let client = reqwest::blocking::Client::new();
+    let mut resp = client.post(OEM_URL.to_owned() + "/attach").json(&battery_attach_params).send().expect("OEM attach post failed");
+    dbg!(&resp);
+    let mut battery_dpp: NFTCredential<PoseidonHasher, PoseidonSignature> = resp.json().expect("OEM attach post failed to unwrap");
+
+    println!("Battery DPP attached: {}\n", serde_json::to_string(&battery_dpp).expect("Unexpected conversion error"));
+
+
+    print!("Waiting for finalization...");
+    sleep(Duration::from_secs(15));
+    println!("done!");
+
+    println!("OEM mints body DPP on car's DPP.");
+
+    let body_params = NewParams{
+        attributes: vec![
+            "body_model".to_owned(),
+            "body_specification".to_owned(),
+            "body_id".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+            "".to_owned(),
+        ],
+        id:255 as u64,
+        expiration:3650,
+        credential_type: "body".to_owned(),
+        delegatable:false,
+        registry: "revocRegistry".to_owned(),
+        sk_issuer: oem_priv.clone(),
+        owner:oem_pub.clone(),
+        trust_list_index: 3
+    };
+    
+
+    
+    let client = reqwest::blocking::Client::new();
+    let mut resp = client.post(OEM_URL.to_owned() + "/new").json(&body_params).send().expect("OEM new post failed");
+    let body_dpp: NFTCredential<PoseidonHasher, PoseidonSignature> = resp.json().expect("OEM new post failed to unwrap");
+
+    println!("Body DPP created: {}\n", serde_json::to_string(&body_dpp).expect("Unexpected conversion error"));
+
+
+    print!("Waiting for finalization...");
+    sleep(Duration::from_secs(15));
+    println!("done!");
+
+    let body_attach_params = AttachParams{
+        nft: body_dpp,
+        private_key: oem_priv.clone(),
+        target: battery_attach_params.target,
+    };
+    
+
+    
+    let client = reqwest::blocking::Client::new();
+    let mut resp = client.post(OEM_URL.to_owned() + "/attach").json(&body_attach_params).send().expect("OEM attach post failed");
+    let mut body_dpp: NFTCredential<PoseidonHasher, PoseidonSignature> = resp.json().expect("OEM attach post failed to unwrap");
+
+    println!("Body DPP attached: {}\n", serde_json::to_string(&body_dpp).expect("Unexpected conversion error"));
+
+
+    print!("Waiting for finalization...");
+    sleep(Duration::from_secs(15));
+    println!("done!");
+
+
+    
+    println!("Alice transfers battery DPP to Bob's pk.");
+    let battery_detach_params = DetachParams{
+        nft: body_dpp,
+        private_key: alice_priv.clone(),
+        target: bob_pub.clone(),
+        path_nft_credential: vec![body_attach_params.target],
+    };
+
+    
+    let client = reqwest::blocking::Client::new();
+    let mut resp = client.post(ALICE_URL.to_owned() + "/detach").json(&battery_detach_params).send().expect("Alice detach post failed");
+    let mut resp_dpp: (
+        NFTCredential<PoseidonHasher, PoseidonSignature>
+    ) = resp.json().expect("Alice detach post failed to unwrap");
+
+    let mut battery_dpp_bob = resp_dpp;
+
+    println!("Bob's battery DPP created: {}\n", serde_json::to_string(&battery_dpp_bob).expect("Unexpected conversion error"));
+
+
+    print!("Waiting for finalization...");
+    sleep(Duration::from_secs(15));
+    println!("done!");
+
+}
 
 fn main(){
     //demo_1();
-    demo_paper();
+    //demo_paper();
+    demo_elma();
 }

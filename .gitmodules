@@ -1,9 +1,9 @@
 [submodule "heimdall-nft-server"]
 	path = heimdall-nft-server
-	url = git@gitlab.cc-asp.fraunhofer.de:blockchainlab/heimdall-nft-server.git
+	url = https://github.com/CGuthmann/heimdall-nft-server.git
 	branch = dev
 
 [submodule "sfnfts"]
 	path = sfnfts
-	url = git@gitlab.cc-asp.fraunhofer.de:blockchainlab/sfnfts.git
+	url = https://github.com/CGuthmann/sfnfts.git
 	branch = feature/child_nft
